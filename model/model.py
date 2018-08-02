@@ -48,25 +48,18 @@ col_names = ['target','id','date','flag','user','text']
 
 df = pd.read_csv(file_path,encoding='ISO-8859-1',names=col_names)
 
-df.head()
-
 txt = df['text']
 
 target = df['target']
 
-print(txt.head())
+glove_dir = "../../../../Downloads/glove.840B.300d.txt"
 
-file = "../../../../Downloads/glove.840B.300d.txt"
-
-Glove_file = open(file)
+Glove_file = open(glove_dir)
 
 w2v_dict = {}
 
 count = 0
-#for line in Glove_file:
-while count<1000:
-    count+=1
-    line = Glove_file.readline()
+for line in Glove_file:
     line = line.strip('\n').split(" ")
     word = line.pop(0)
     line = np.array(line)
@@ -100,16 +93,12 @@ def pre_proc_sen(sentence):
     test = test.split()
     return test
 
-num_sam = 1000
 max_words = 30
 vec_np = 0
 txt_fin = []
 for i in range(len(txt)):
-    if(i>=num_sam):
-        break
-
-    sample_txt = txt[i+799500]
-    sample_tar = target[i+799500]
+    sample_txt = txt[i]
+    sample_tar = target[i]
     
     sample_txt = pre_proc_sen(sample_txt)
     
@@ -138,7 +127,7 @@ print(tar_np.shape)
 
 num_inp = 300
 num_classes = 3
-epochs = 1
+epochs = 100
 
 inp = tf.placeholder(tf.float32,shape=[max_words,300])
 
@@ -150,7 +139,6 @@ b_out = tf.Variable(tf.truncated_normal(shape=[num_classes],stddev=.1))
 y = lstm_layer(inp,num_inp,max_words)
 
 y = tf.reshape(y,(1,300))
-print(y.shape)
 
 y_out = tf.matmul(y,W_out)+b_out
 
@@ -173,7 +161,6 @@ with tf.Session() as sess:
     
     for ep in range(epochs):
         print("epoch: "+str(ep))
-        print("length of training data: "+str(len(X_train)))
         for i in range(len(X_train)):
             batch_x = X_train[i]
 
@@ -189,26 +176,4 @@ with tf.Session() as sess:
         loss_arr.append(tot_loss)
 
 plt.plot([i for i in range(len(loss_arr))],loss_arr)
-
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
-    
-
-    batch_x = X_train[1]
-        
-    ind = np.divide(Y_train[1],2)
-    batch_y = tf.one_hot(indices = ind, depth = 3)
-    batch_y = sess.run(batch_y)
-    
-    out = tf.nn.softmax(y_out[0])
-    pred = tf.argmax(out)
-
-    output = sess.run(out, feed_dict={inp:batch_x,y_true:batch_y})
-    prediction = sess.run(pred, feed_dict={inp:batch_x,y_true:batch_y})
-    
-    print(txt_fin[0])
-    print(batch_y[0])
-    print(output)
-    print(prediction)
 
