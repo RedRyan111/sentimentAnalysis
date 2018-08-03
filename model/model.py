@@ -42,7 +42,11 @@ def lstm_layer(X_txt,num_inp,max_len):
         curC, curH = small_lstm(num_inp,X_txt[i],curH,curC)
     return curH
 
+<<<<<<< HEAD
 file_path = "../sentiment140/training.1600000.processed.noemoticon.csv"
+=======
+file_path = "../../../../Downloads/sentiment140/training.1600000.processed.noemoticon.csv"
+>>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
 
 col_names = ['target','id','date','flag','user','text']
 
@@ -52,7 +56,11 @@ txt = df['text']
 
 target = df['target']
 
+<<<<<<< HEAD
 glove_dir = "../GloveWordEmb/glove.840B.300d.txt"
+=======
+glove_dir = "../../../../Downloads/glove.840B.300d.txt"
+>>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
 
 Glove_file = open(glove_dir)
 

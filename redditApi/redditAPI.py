@@ -1,6 +1,9 @@
 from praw.models import MoreComments
+<<<<<<< HEAD
 from datetime import date
 import datetime
+=======
+>>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
 import pandas as pd
 import numpy as np
 import webbrowser
@@ -9,6 +12,7 @@ import praw
 import json
 import sys
 import re
+<<<<<<< HEAD
 
 now = datetime.datetime.now()
 
@@ -26,6 +30,17 @@ dif = dif.days
 com_freq = "https://api.pushshift.io/reddit/search/comment/?q=vodafone&aggs=created_utc&after={0}d&before={1}d&frequency=hour&size=50".format(dif,dif+1)
 
 sub_freq = "https://api.pushshift.io/reddit/search/submission/?q=vodafone&aggs=created_utc&after={0}d&before={1}d&frequency=hour&size=50".format(dif,dif+1)
+=======
+get_ipython().magic('matplotlib inline')
+
+time = (sys.argv[0],sys.argv[1])
+
+time = (10,9)
+
+com_freq = "https://api.pushshift.io/reddit/search/comment/?q=vodafone&aggs=created_utc&after={0}d&before={1}d&frequency=hour&size=50".format(10,9)
+
+sub_freq = "https://api.pushshift.io/reddit/search/submission/?q=vodafone&aggs=created_utc&after={0}d&before={1}d&frequency=hour&size=50".format(10,9)
+>>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
 
 print(com_freq)
 
@@ -89,3 +104,7 @@ df_sub = df_sub.iloc[1:]
 df_com.to_csv('reddit_com.csv',header=False,index=False,mode='a')
 
 df_sub.to_csv('reddit_sub.csv',header=False,index=False,mode='a')
+<<<<<<< HEAD
+=======
+
+>>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
