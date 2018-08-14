@@ -4,7 +4,6 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import re
-get_ipython().magic('matplotlib inline')
 
 def small_lstm(num_inp,x_old,h_old,c_old):
     W_f = tf.Variable(tf.truncated_normal([num_inp],stddev=.1))
@@ -42,11 +41,8 @@ def lstm_layer(X_txt,num_inp,max_len):
         curC, curH = small_lstm(num_inp,X_txt[i],curH,curC)
     return curH
 
-<<<<<<< HEAD
-file_path = "../sentiment140/training.1600000.processed.noemoticon.csv"
-=======
-file_path = "../../../../Downloads/sentiment140/training.1600000.processed.noemoticon.csv"
->>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
+file_path = "~/Downloads/sentiment140/training.1600000.processed.noemoticon.csv"
+
 
 col_names = ['target','id','date','flag','user','text']
 
@@ -56,11 +52,8 @@ txt = df['text']
 
 target = df['target']
 
-<<<<<<< HEAD
-glove_dir = "../GloveWordEmb/glove.840B.300d.txt"
-=======
-glove_dir = "../../../../Downloads/glove.840B.300d.txt"
->>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
+glove_dir = "../../../../Downloads/GloveWordEmb/glove.840B.300d.txt"
+
 
 Glove_file = open(glove_dir)
 
@@ -86,10 +79,10 @@ def sample2Vec(w2v_dict,sample):
         sample_emb.append(hold)
     return sample_emb
 
+print("before dataframes")
 vec_df = pd.DataFrame(columns=list(range(300)))
 tar_df = pd.DataFrame(columns=['target'])
-
-print(vec_df)
+print("done with dataframes")
 
 def pre_proc_sen(sentence):
     test = sentence.lower()
@@ -104,34 +97,49 @@ def pre_proc_sen(sentence):
 max_words = 30
 vec_np = 0
 txt_fin = []
-for i in range(len(txt)):
-    sample_txt = txt[i]
-    sample_tar = target[i]
-    
-    sample_txt = pre_proc_sen(sample_txt)
-    
-    if(len(sample_txt) < max_words):
-        txt_fin.append(sample_txt)
-        sample_txt = sample2Vec(w2v_dict,sample_txt)
-        
-        for j in range(max_words):
-            if(j >= len(sample_txt)):
-                sample_txt.append(np.zeros(300))
-                
-        sample_txt = np.array(sample_txt)
-        sample_txt = np.reshape(sample_txt,(1,30,300))
-        
-        sample_tar = np.reshape(sample_tar,(1,1))
-        
-        if (i == 0):
-            vec_np = sample_txt
-            tar_np = sample_tar
-        else:
-            vec_np = np.concatenate((vec_np, sample_txt),axis=0)
-            tar_np = np.concatenate((tar_np, sample_tar),axis=0)
 
-print(vec_np.shape)
-print(tar_np.shape)
+X_train, X_test, Y_train, Y_test = train_test_split(vec_np,tar_np,test_size=0.30,random_state=42)
+x_train = pd.DataFrame(X_train)
+y_train = pd.DataFrame(Y_train)
+
+
+#create batches mini batches
+small_len = 100000
+num_batches = int(len(X_train)/(small_len))
+x_data_arr = []
+y_data_arr = []
+for i in range(1):#num_batches):
+    small_arr = x_train.iloc([i*small_len,i*small_len+small_len])
+    x_data_arr = x_data_arr.append(small_arr)
+
+    small_arr = y_train.iloc([i*small_len,i*small_len+small_len])
+    y_data_arr = y_data_arr.append(small_arr)
+
+
+#Create batches of word to vector
+x_vect_arr = []
+for i in range(1):#num_batches):
+    for j in range(small_len): 
+        sample_txt = x_data_arr[i][j]
+    
+        sample_txt = pre_proc_sen(sample_txt)
+        
+        if(len(sample_txt) < max_words):
+            txt_fin.append(sample_txt)
+            sample_txt = sample2Vec(w2v_dict,sample_txt)
+        
+            for j in range(max_words):
+                if(j >= len(sample_txt)):
+                    sample_txt.append(np.zeros(300))
+                
+            sample_txt = np.array(sample_txt)
+            sample_txt = np.reshape(sample_txt,(1,30,300))        
+
+        x_mini_arr.append(sample_txt)
+
+    x_vect_arr[i].append(x_mini_arr)
+
+#sample_tar = np.reshape(sample_tar,(1,1))
 
 num_inp = 300
 num_classes = 3
@@ -161,7 +169,7 @@ acc = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 loss_arr = []
 tot_loss = 0
 
-X_train, X_test, Y_train, Y_test = train_test_split(vec_np,tar_np,test_size=0.30,random_state=42)
+
 
 init = tf.global_variables_initializer()
 with tf.Session() as sess:

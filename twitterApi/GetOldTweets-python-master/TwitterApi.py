@@ -1,4 +1,5 @@
 from twitter import Twitter, OAuth, TwitterHTTPError, TwitterStream
+from langdetect import detect
 from datetime import datetime
 import time
 import tweepy
@@ -21,7 +22,7 @@ else:
 
 tweetsCriteria = got.manager.TweetCriteria()
 
-tweetsCriteria = tweetsCriteria.setMaxTweets(1000)
+tweetsCriteria = tweetsCriteria.setMaxTweets(2000)
 
 tweetsCriteria = tweetsCriteria.setQuerySearch("Vodafone")
 
@@ -31,11 +32,7 @@ tweetsCriteria = tweetsCriteria.setUntil(sys.argv[2])
 
 tweets = got.manager.TweetManager.getTweets(tweetsCriteria)
 
-<<<<<<< HEAD
-files = open("vdf_tweets.txt","a")
-=======
-file = open("vdf_tweets.txt","a")
->>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
+files = open("vdf_tweets1.txt","a")
 
 tweet_dict = {}
 for tweet in tweets:
@@ -51,13 +48,13 @@ for tweet in tweets:
     ID = tweet.id
     txt = tweet.text
     tweet_dict[ID]=txt
-<<<<<<< HEAD
-    files.write(str(date)+" "+str(txt)+"\n")
+    try:
+    	lang = detect(txt)
+    except:
+    	lang = "Nan"
+
+    full_str = str(ID)+" "+str(txt)+" "+str(year)+"-"+str(month)+"-"+str(day)+" "+str(lang)+"\n"
+    files.write(full_str)
 
 files.close()
-=======
-    file.write(str(date)+" "+str(txt)+"\n")
-
-file.close()
->>>>>>> e54aebb9a4623e172311b6b2b53be93eb550e190
 
