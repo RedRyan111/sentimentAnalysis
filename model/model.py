@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import re
 
+#Single lstm node
 def small_lstm(num_inp,x_old,h_old,c_old):
     W_f = tf.Variable(tf.truncated_normal([num_inp],stddev=.1))
     W_i = tf.Variable(tf.truncated_normal([num_inp],stddev=.1))
@@ -33,6 +34,7 @@ def small_lstm(num_inp,x_old,h_old,c_old):
 
     return c_t,h_t
 
+#Recursive lstm generator
 def lstm_layer(X_txt,num_inp,max_len):
     curC = 0.0
     curH = 0.0
@@ -41,8 +43,9 @@ def lstm_layer(X_txt,num_inp,max_len):
         curC, curH = small_lstm(num_inp,X_txt[i],curH,curC)
     return curH
 
-file_path = "~/Downloads/sentiment140/training.1600000.processed.noemoticon.csv"
+#Creates dataframe from training dataset
 
+file_path = "~/Downloads/sentiment140/training.1600000.processed.noemoticon.csv"
 
 col_names = ['target','id','date','flag','user','text']
 
@@ -62,6 +65,7 @@ w2v_dict = {}
 print("Word embeddings")
 
 count = 0
+#delete while loop & uncomment for loop for full word embeddings
 #for line in Glove_file:
 while count<1000:
     count+=1
@@ -73,6 +77,9 @@ while count<1000:
     
     w2v_dict[word] = line
 
+#input: dictionary, sentence string
+#return vector for each word in sentence
+#output: (30,300) numpy array
 def sample2Vec(w2v_dict,sample):
     sample_emb = []
     hold = []
@@ -84,11 +91,14 @@ def sample2Vec(w2v_dict,sample):
         sample_emb.append(hold)
     return sample_emb
 
-print("before dataframes")
+#Creates string and target dataframes
+print("Initialize dataframes")
 vec_df = pd.DataFrame(columns=list(range(300)))
 tar_df = pd.DataFrame(columns=['target'])
-print("done with dataframes")
 
+#input: string
+#Cleans sentence strings
+#output: list
 def pre_proc_sen(sentence):
     test = sentence.lower()
     test = test.replace("'","").replace('"',"")
@@ -99,15 +109,15 @@ def pre_proc_sen(sentence):
     test = test.split()
     return test
 
-max_words = 30
-
+#TrainTestSplit must be done before batching to split equally
 X_train, X_test, Y_train, Y_test = train_test_split(txt,target,test_size=0.30,random_state=42)
 x_train = pd.DataFrame(X_train)
 y_train = pd.DataFrame(Y_train)
 
 print("start data mini batches")
 
-#create batches mini batches
+#create data mini batches
+max_words = 30
 small_len = 100000
 num_batches = int(len(X_train)/(small_len))
 x_data_arr = [None]*num_batches
@@ -122,6 +132,9 @@ for i in range(num_batches):
 
 print("start word to vector mini batches")
 #Create batches of word to vector
+#uncomment "#num_batches" for full word2vec
+#uncomment "hold.append..." and "x_vect_arr[i]..." for full word2vec
+#delete "x_vect_arr[i] = sample_txt" for full word2vec
 x_vect_arr = [np.zeros((30,300))]*num_batches
 for i in range(1):#num_batches):
     hold = []
@@ -141,10 +154,14 @@ for i in range(1):#num_batches):
     #x_vect_arr[i] = hold
     x_vect_arr[i] = sample_txt
 
+
+print("Creating graph")
+
 num_inp = 300
 num_classes = 3
-epochs = 3
+epochs = 10
 
+#Create graph
 inp = tf.placeholder(tf.float32,shape=[max_words,300])
 
 y_true = tf.placeholder(tf.float32,[1,num_classes])
@@ -158,8 +175,10 @@ y = tf.reshape(y,(1,300))
 
 y_out = tf.matmul(y,W_out)+b_out
 
+#softmax cross entropy
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_true,logits=y_out))
 
+#Adam optimizer
 optimizer = tf.train.AdamOptimizer().minimize(cross_entropy)
 
 correct_prediction = tf.equal(tf.argmax(y_out,1),tf.argmax(y_true,1))
@@ -207,12 +226,14 @@ with tf.Session() as sess:
 
 print("done with graph")
 
+#matplotlib of loss vs epochs
 plt.plot([i for i in range(len(loss_arr))],loss_arr)
 plt.xlabel("Epochs")
 plt.ylabel("Loss (cross entropy)")
 plt.title("Loss vs Epochs")
 plt.show()
 
+#Get prediction of string
 ex_str = "I can't believe the service, like, really?"
 
 ex_str = pre_proc_sen(ex_str)
@@ -227,6 +248,9 @@ for i in range(max_words):
                 
 ex_str = np.array(ex_str)
 
+print("test string: "+ex_str)
+
+#Start prediction graph
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
