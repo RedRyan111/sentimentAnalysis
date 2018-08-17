@@ -59,8 +59,13 @@ Glove_file = open(glove_dir)
 
 w2v_dict = {}
 
+print("Word embeddings")
+
 count = 0
-for line in Glove_file:
+#for line in Glove_file:
+while count<1000:
+    count+=1
+    line = Glove_file.readline()
     line = line.strip('\n').split(" ")
     word = line.pop(0)
     line = np.array(line)
@@ -95,55 +100,50 @@ def pre_proc_sen(sentence):
     return test
 
 max_words = 30
-vec_np = 0
-txt_fin = []
 
-X_train, X_test, Y_train, Y_test = train_test_split(vec_np,tar_np,test_size=0.30,random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(txt,target,test_size=0.30,random_state=42)
 x_train = pd.DataFrame(X_train)
 y_train = pd.DataFrame(Y_train)
 
+print("start data mini batches")
 
 #create batches mini batches
 small_len = 100000
 num_batches = int(len(X_train)/(small_len))
-x_data_arr = []
-y_data_arr = []
-for i in range(1):#num_batches):
-    small_arr = x_train.iloc([i*small_len,i*small_len+small_len])
-    x_data_arr = x_data_arr.append(small_arr)
+x_data_arr = [None]*num_batches
+y_data_arr = [None]*num_batches
+for i in range(num_batches):
+    small_arr = x_train.iloc[i*small_len:i*small_len+small_len]
+    x_data_arr[i] = small_arr
 
-    small_arr = y_train.iloc([i*small_len,i*small_len+small_len])
-    y_data_arr = y_data_arr.append(small_arr)
+    small_arr = y_train.iloc[i*small_len:i*small_len+small_len]
+    y_data_arr[i] = small_arr
 
 
+print("start word to vector mini batches")
 #Create batches of word to vector
-x_vect_arr = []
+x_vect_arr = [np.zeros((30,300))]*num_batches
 for i in range(1):#num_batches):
+    hold = []
     for j in range(small_len): 
-        sample_txt = x_data_arr[i][j]
-    
+        sample_txt = x_data_arr[i].iloc[j]['text']
         sample_txt = pre_proc_sen(sample_txt)
         
         if(len(sample_txt) < max_words):
-            txt_fin.append(sample_txt)
             sample_txt = sample2Vec(w2v_dict,sample_txt)
         
             for j in range(max_words):
                 if(j >= len(sample_txt)):
                     sample_txt.append(np.zeros(300))
                 
-            sample_txt = np.array(sample_txt)
-            sample_txt = np.reshape(sample_txt,(1,30,300))        
-
-        x_mini_arr.append(sample_txt)
-
-    x_vect_arr[i].append(x_mini_arr)
-
-#sample_tar = np.reshape(sample_tar,(1,1))
+            sample_txt = np.array(sample_txt)     
+        #hold.append(sample_txt)
+    #x_vect_arr[i] = hold
+    x_vect_arr[i] = sample_txt
 
 num_inp = 300
 num_classes = 3
-epochs = 100
+epochs = 3
 
 inp = tf.placeholder(tf.float32,shape=[max_words,300])
 
@@ -162,14 +162,14 @@ cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels
 
 optimizer = tf.train.AdamOptimizer().minimize(cross_entropy)
 
-correct_prediction = tf.equal(tf.argmax(y2,1),tf.argmax(y_true,1))
+correct_prediction = tf.equal(tf.argmax(y_out,1),tf.argmax(y_true,1))
 
 acc = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 loss_arr = []
 tot_loss = 0
 
-
+print("starting graph")
 
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
@@ -177,19 +177,39 @@ with tf.Session() as sess:
     
     for ep in range(epochs):
         print("epoch: "+str(ep))
-        for i in range(len(X_train)):
-            batch_x = X_train[i]
+        tot_loss = 0
+        #for k in range(len(x_vect_arr)):
+        #for i in range(len(x_vect_arr[k])):
+        for i in range(len(x_vect_arr)):
 
-            ind = np.divide(Y_train[i],2)
+            batch_x = np.array(list(x_vect_arr[i]))
+            batch_x = np.reshape(batch_x,(30,300))
 
-            batch_y = tf.one_hot(indices = ind, depth = 3)
-            batch_y = sess.run(batch_y)
-            
+            batch_y = [[0,0,0]]
+            if(Y_train.iloc[i] == 0):
+                batch_y = [[1,0,0]]
+            elif(Y_train.iloc[i] == 2):
+                batch_y = [[0,1,0]]
+            elif(Y_train.iloc[i] == 4):
+                batch_y = [[0,0,1]]
+
+            batch_y = np.array(batch_y)  
+
+            print("current sentence: "+str(i))
+
             sess.run(optimizer, feed_dict={inp:batch_x,y_true:batch_y})
 
             hold = sess.run(cross_entropy, feed_dict={inp:batch_x,y_true:batch_y})
+
             tot_loss += hold
+
         loss_arr.append(tot_loss)
 
+print("done with graph")
+
 plt.plot([i for i in range(len(loss_arr))],loss_arr)
+plt.xlabel("Epochs")
+plt.ylabel("Loss (cross entropy)")
+plt.title("Loss vs Epochs")
+plt.show()
 
