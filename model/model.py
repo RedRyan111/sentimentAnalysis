@@ -213,3 +213,37 @@ plt.ylabel("Loss (cross entropy)")
 plt.title("Loss vs Epochs")
 plt.show()
 
+ex_str = "I can't believe the service, like, really?"
+
+ex_str = pre_proc_sen(ex_str)
+
+ex_str = sample2Vec(w2v_dict,ex_str)
+
+ex_str = list(ex_str)
+
+for i in range(max_words):
+    if(i >= len(ex_str)):
+        ex_str.append(np.zeros(300))
+                
+ex_str = np.array(ex_str)
+
+init = tf.global_variables_initializer()
+with tf.Session() as sess:
+    sess.run(init)
+
+    batch_x = np.array(list(ex_str))
+    batch_x = np.reshape(batch_x,(30,300))
+
+    hold = sess.run(y_out, feed_dict={inp:batch_x})
+
+    print(hold[0])
+    if( (hold[0][0] > hold[0][1]) and (hold[0][0] > hold[0][2]) ):
+        print("negative")
+    elif( (hold[0][1] > hold[0][0]) and (hold[0][1] > hold[0][2]) ):
+        print("neutral")
+    elif ( (hold[0][2] > hold[0][0]) and (hold[0][2] > hold[0][1])  ):
+        print("positive")
+
+
+print("done with graph")
+
